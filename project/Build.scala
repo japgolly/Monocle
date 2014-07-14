@@ -6,12 +6,14 @@ import xerial.sbt.Sonatype.SonatypeKeys._
 import com.typesafe.tools.mima.plugin.MimaPlugin.mimaDefaultSettings
 import com.typesafe.tools.mima.plugin.MimaKeys.previousArtifact
 
+import scala.scalajs.sbtplugin.ScalaJSPlugin._
+
 object BuildSettings {
   import MonoclePublishing._
   val buildScalaVersion = "2.11.0"
 
   val buildSettings = Defaults.defaultSettings ++ Seq(
-    organization       := "com.github.julien-truffaut",
+    organization       := "com.github.japgolly.fork.monocle",
     version            := "0.4.0",
     scalaVersion       := buildScalaVersion,
     crossScalaVersions := Seq("2.10.4", "2.11.0"),
@@ -20,11 +22,11 @@ object BuildSettings {
     incOptions         := incOptions.value.withNameHashing(true),
     resolvers          += Resolver.sonatypeRepo("releases"),
     resolvers          += Resolver.sonatypeRepo("snapshots")
-  ) ++ publishSettings
+  ) ++ publishSettings ++ scalaJSBuildSettings
 }
 
 object Dependencies {
-  val scalaz            = "org.scalaz"      %% "scalaz-core"               % "7.0.6"
+  val scalaz            = "com.github.japgolly.fork.scalaz" %%% "scalaz-core" % "7.0.6"
   val scalaCheck        = "org.scalacheck"  %% "scalacheck"                % "1.11.3"
   val scalaCheckBinding = "org.scalaz"      %% "scalaz-scalacheck-binding" % "7.0.6"   % "test"
   val specs2            = "org.specs2"      %% "specs2"                    % "2.3.11"  % "test"
