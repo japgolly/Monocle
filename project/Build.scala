@@ -6,12 +6,14 @@ import com.typesafe.tools.mima.plugin.MimaKeys.previousArtifact
 
 import org.typelevel.sbt.TypelevelPlugin._
 
+import scala.scalajs.sbtplugin.ScalaJSPlugin._
+
 object BuildSettings {
   import MonoclePublishing._
   val buildScalaVersion = "2.11.2"
 
   val buildSettings = typelevelDefaultSettings ++ Seq(
-    organization       := "com.github.julien-truffaut",
+    organization       := "com.github.japgolly.fork.monocle",
     scalaVersion       := buildScalaVersion,
     crossScalaVersions := Seq("2.10.4", "2.11.2"),
     scalacOptions     ++= Seq("-deprecation", "-unchecked", "-feature",
@@ -19,11 +21,11 @@ object BuildSettings {
     incOptions         := incOptions.value.withNameHashing(true),
     resolvers          += Resolver.sonatypeRepo("releases"),
     resolvers          += Resolver.sonatypeRepo("snapshots")
-  ) ++ publishSettings
+  ) ++ publishSettings ++ scalaJSBuildSettings
 }
 
 object Dependencies {
-  val scalaz            = "org.scalaz"      %% "scalaz-core"               % "7.1.0"
+  val scalaz            = "com.github.japgolly.fork.scalaz" %%% "scalaz-core" % "7.1.0"
   val scalaCheckBinding = "org.scalaz"      %% "scalaz-scalacheck-binding" % "7.1.0" % "test"
   val specs2Scalacheck  = "org.specs2"      %% "specs2-scalacheck"         % "2.4"
   val scalazSpec2       = "org.typelevel"   %% "scalaz-specs2"             % "0.2"   % "test"
