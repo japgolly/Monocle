@@ -9,13 +9,22 @@ import org.typelevel.sbt.TypelevelPlugin._
 import pl.project13.scala.sbt.SbtJmh._
 import JmhKeys._
 
+import scala.scalajs.sbtplugin.ScalaJSPlugin._
+
 object BuildSettings {
   import MonoclePublishing._
   val buildScalaVersion = "2.11.4"
   val previousVersion   = "1.0.0"
 
+  val sourceMapOpt = {
+    val a = new java.io.File("").toURI.toString.replaceFirst("/$", "")
+    val g = "https://raw.githubusercontent.com/japgolly/Monocle/v1.0.1-js"
+    s"-P:scalajs:mapSourceURI:$a->$g/"
+  }
+
   val buildSettings = typelevelDefaultSettings ++ Seq(
-    organization       := "com.github.julien-truffaut",
+    organization       := "com.github.japgolly.fork.monocle",
+    scalacOptions      += sourceMapOpt,
     scalaVersion       := buildScalaVersion,
     crossScalaVersions := Seq("2.10.4", "2.11.4"),
     scalacOptions     ++= Seq(
@@ -32,11 +41,11 @@ object BuildSettings {
     resolvers          += Resolver.sonatypeRepo("releases"),
     resolvers          += Resolver.sonatypeRepo("snapshots"),
     resolvers          += "bintray/non" at "http://dl.bintray.com/non/maven"
-  ) ++ publishSettings
+  ) ++ publishSettings ++ scalaJSBuildSettings
 }
 
 object Dependencies {
-  val scalaz            = "org.scalaz"      %% "scalaz-core"               % "7.1.0"
+  def scalaz            = Def setting ("com.github.japgolly.fork.scalaz" %%% "scalaz-core" % "7.1.0-4")
   val scalaCheckBinding = "org.scalaz"      %% "scalaz-scalacheck-binding" % "7.1.0"  % "test"
   val specs2Scalacheck  = "org.specs2"      %% "specs2-scalacheck"         % "2.4.14"
   val scalazSpec2       = "org.typelevel"   %% "scalaz-specs2"             % "0.3.0"  % "test"
@@ -68,7 +77,7 @@ object MonocleBuild extends Build {
     "monocle-core",
     file("core"),
     settings = buildSettings ++ Seq(
-      libraryDependencies ++= Seq(scalaz),
+      libraryDependencies ++= Seq(scalaz.value),
       addCompilerPlugin(kindProjector),
       previousArtifact     := Some("com.github.julien-truffaut"  %  "monocle-core_2.11" % previousVersion)
     )
@@ -78,7 +87,7 @@ object MonocleBuild extends Build {
     "monocle-law",
     file("law"),
     settings = buildSettings ++ Seq(
-      libraryDependencies ++= Seq(scalaz, specs2Scalacheck),
+      libraryDependencies ++= Seq(scalaz.value, specs2Scalacheck),
       previousArtifact := Some("com.github.julien-truffaut"  %  "monocle-law_2.11" % previousVersion)
     )
   ) dependsOn(core)
@@ -104,7 +113,7 @@ object MonocleBuild extends Build {
     "monocle-generic",
     file("generic"),
     settings = buildSettings ++ Seq(
-      libraryDependencies ++= Seq(scalaz, shapeless.value),
+      libraryDependencies ++= Seq(scalaz.value, shapeless.value),
       previousArtifact := Some("com.github.julien-truffaut"  %  "monocle-generic_2.11" % previousVersion)
     )
   ) dependsOn(core)
@@ -114,7 +123,7 @@ object MonocleBuild extends Build {
     file("test"),
     settings = buildSettings ++ Seq(
       publishArtifact      := false,
-      libraryDependencies ++= Seq(scalaz, scalaCheckBinding, scalazSpec2, specs2Scalacheck, shapeless.value)
+      libraryDependencies ++= Seq(scalaz.value, scalaCheckBinding, scalazSpec2, specs2Scalacheck, shapeless.value)
     )
   ) dependsOn(core, generic ,law)
 
@@ -123,7 +132,7 @@ object MonocleBuild extends Build {
     file("example"),
     settings = buildSettings ++ Seq(
       publishArtifact      := false,
-      libraryDependencies ++= Seq(scalaz, specs2Scalacheck, shapeless.value),
+      libraryDependencies ++= Seq(scalaz.value, specs2Scalacheck, shapeless.value),
       addCompilerPlugin(paradisePlugin) // Unfortunately necessary :( see: http://stackoverflow.com/q/23485426/463761
     )
   ) dependsOn(core, macros, generic, test % "test->test")
