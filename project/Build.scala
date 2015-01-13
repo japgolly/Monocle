@@ -9,12 +9,17 @@ import org.typelevel.sbt.TypelevelPlugin._
 import pl.project13.scala.sbt.SbtJmh._
 import JmhKeys._
 
-import scala.scalajs.sbtplugin.ScalaJSPlugin._
+import org.scalajs.sbtplugin.ScalaJSPlugin
+import org.scalajs.sbtplugin.ScalaJSPlugin.autoImport.toScalaJSGroupID
 
 object BuildSettings {
   import MonoclePublishing._
   val buildScalaVersion = "2.11.4"
   val previousVersion   = "1.0.0"
+
+  def scalajs: Project => Project =
+    _.enablePlugins(org.scalajs.sbtplugin.ScalaJSPlugin)
+      .settings(scalacOptions += sourceMapOpt)
 
   val sourceMapOpt = {
     val a = new java.io.File("").toURI.toString.replaceFirst("/$", "")
@@ -24,7 +29,6 @@ object BuildSettings {
 
   val buildSettings = typelevelDefaultSettings ++ Seq(
     organization       := "com.github.japgolly.fork.monocle",
-    scalacOptions      += sourceMapOpt,
     scalaVersion       := buildScalaVersion,
     crossScalaVersions := Seq("2.10.4", "2.11.4"),
     scalacOptions     ++= Seq(
@@ -41,7 +45,7 @@ object BuildSettings {
     resolvers          += Resolver.sonatypeRepo("releases"),
     resolvers          += Resolver.sonatypeRepo("snapshots"),
     resolvers          += "bintray/non" at "http://dl.bintray.com/non/maven"
-  ) ++ publishSettings ++ scalaJSBuildSettings
+  ) ++ publishSettings //++ ScalaJSPlugin.projectSettings
 }
 
 object Dependencies {
@@ -71,7 +75,8 @@ object MonocleBuild extends Build {
     settings = buildSettings ++ Seq(
       publishArtifact := false,
       run <<= run in Compile in macros)
-  ) aggregate(core, law, macros, generic, test, example, bench)
+  ).aggregate(core, law, macros, generic, test, example, bench)
+  .configure(scalajs)
 
   lazy val core: Project = Project(
     "monocle-core",
@@ -82,6 +87,7 @@ object MonocleBuild extends Build {
       previousArtifact     := Some("com.github.julien-truffaut"  %  "monocle-core_2.11" % previousVersion)
     )
   )
+  .configure(scalajs)
 
   lazy val law: Project = Project(
     "monocle-law",
@@ -91,6 +97,7 @@ object MonocleBuild extends Build {
       previousArtifact := Some("com.github.julien-truffaut"  %  "monocle-law_2.11" % previousVersion)
     )
   ) dependsOn(core)
+  .configure(scalajs)
 
   lazy val macros: Project = Project(
     "monocle-macro",
@@ -108,6 +115,7 @@ object MonocleBuild extends Build {
       } getOrElse Nil
     )
   ) dependsOn(core)
+  .configure(scalajs)
 
   lazy val generic: Project = Project(
     "monocle-generic",
@@ -117,6 +125,7 @@ object MonocleBuild extends Build {
       previousArtifact := Some("com.github.julien-truffaut"  %  "monocle-generic_2.11" % previousVersion)
     )
   ) dependsOn(core)
+  .configure(scalajs)
 
   lazy val test: Project = Project(
     "monocle-test",
