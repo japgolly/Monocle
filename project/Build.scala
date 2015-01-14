@@ -14,7 +14,7 @@ import org.scalajs.sbtplugin.ScalaJSPlugin.autoImport.toScalaJSGroupID
 
 object BuildSettings {
   import MonoclePublishing._
-  val buildScalaVersion = "2.11.4"
+  val buildScalaVersion = "2.11.5"
   val previousVersion   = "1.0.0"
 
   def scalajs: Project => Project =
@@ -30,7 +30,7 @@ object BuildSettings {
   val buildSettings = typelevelDefaultSettings ++ Seq(
     organization       := "com.github.japgolly.fork.monocle",
     scalaVersion       := buildScalaVersion,
-    crossScalaVersions := Seq("2.10.4", "2.11.4"),
+    crossScalaVersions := Seq("2.10.4", "2.11.5"),
     scalacOptions     ++= Seq(
       "-deprecation",
       "-encoding", "UTF-8",
@@ -45,7 +45,7 @@ object BuildSettings {
     resolvers          += Resolver.sonatypeRepo("releases"),
     resolvers          += Resolver.sonatypeRepo("snapshots"),
     resolvers          += "bintray/non" at "http://dl.bintray.com/non/maven"
-  ) ++ publishSettings //++ ScalaJSPlugin.projectSettings
+  ) ++ publishSettings ++ ScalaJSPlugin.projectSettings
 }
 
 object Dependencies {
