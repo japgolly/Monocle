@@ -31,6 +31,7 @@ object BuildSettings {
     organization       := "com.github.japgolly.fork.monocle",
     scalaVersion       := buildScalaVersion,
     crossScalaVersions := Seq("2.10.4", "2.11.5"),
+    version := "1.0.1-2",
     scalacOptions     ++= Seq(
       "-deprecation",
       "-encoding", "UTF-8",
@@ -49,7 +50,7 @@ object BuildSettings {
 }
 
 object Dependencies {
-  def scalaz            = Def setting ("com.github.japgolly.fork.scalaz" %%% "scalaz-core" % "7.1.0-4")
+  def scalaz            = Def setting ("com.github.japgolly.fork.scalaz" %%% "scalaz-core" % "7.1.1-2")
   val scalaCheckBinding = "org.scalaz"      %% "scalaz-scalacheck-binding" % "7.1.0"  % "test"
   val specs2Scalacheck  = "org.specs2"      %% "specs2-scalacheck"         % "2.4.14"
   val scalazSpec2       = "org.typelevel"   %% "scalaz-specs2"             % "0.3.0"  % "test"
