@@ -14,8 +14,11 @@ import sbtrelease.Utilities._
 
 import pl.project13.scala.sbt.SbtJmh._
 
+import org.scalajs.sbtplugin.ScalaJSPlugin
+import org.scalajs.sbtplugin.ScalaJSPlugin.autoImport.toScalaJSGroupID
+
 object Dependencies {
-  val scalaz            = "org.scalaz"      %% "scalaz-core"     % "7.1.1"
+  val scalaz            = "com.github.japgolly.fork.scalaz"      %%%! "scalaz-core"     % "7.1.1-2"
   val scalacheck        = "org.scalacheck"  %% "scalacheck"      % "1.12.2"
   val scalazSpec2       = "org.typelevel"   %% "scalaz-specs2"   % "0.4.0"  % "test"
   val shapeless = Def setting (
@@ -38,8 +41,18 @@ object MonocleBuild extends Build {
   def previousVersion(module: String): Setting[_] =
     previousArtifact := Some("com.github.julien-truffaut" %  (s"monocle-${module}_2.11") % "1.1.0")
 
+  def scalajs: Project => Project =
+    _.enablePlugins(org.scalajs.sbtplugin.ScalaJSPlugin)
+      .settings(scalacOptions += sourceMapOpt)
+
+  val sourceMapOpt = {
+    val a = new java.io.File("").toURI.toString.replaceFirst("/$", "")
+    val g = "https://raw.githubusercontent.com/japgolly/Monocle/v1.1.1-js"
+    s"-P:scalajs:mapSourceURI:$a->$g/"
+  }
+
   val buildSettings = Seq(
-    organization       := "com.github.julien-truffaut",
+    organization       := "com.github.japgolly.fork.monocle",
     scalaVersion       := buildScalaVersion,
     crossScalaVersions := Seq("2.10.4", "2.11.6"),
     scalacOptions     ++= Seq(
@@ -60,14 +73,15 @@ object MonocleBuild extends Build {
     )
   )
 
-  lazy val defaultSettings = buildSettings ++ releaseSettings ++ publishSettings
+  lazy val defaultSettings = buildSettings ++ releaseSettings ++ publishSettings ++ ScalaJSPlugin.projectSettings
 
   lazy val root: Project = Project(
     "monocle",
     file("."),
     settings = defaultSettings ++ noPublishSettings ++ Seq(
       run <<= run in Compile in macros
-    )) aggregate(core, law, macros, generic, test, example, bench)
+    )).aggregate(core, law, macros, generic, test, example, bench)
+  .configure(scalajs)
 
   lazy val core: Project = Project(
     "monocle-core",
@@ -78,6 +92,7 @@ object MonocleBuild extends Build {
       previousVersion("core")
     )
   )
+  .configure(scalajs)
 
   lazy val law: Project = Project(
     "monocle-law",
@@ -87,6 +102,7 @@ object MonocleBuild extends Build {
       previousVersion("law")
     )
   ) dependsOn(core)
+  .configure(scalajs)
 
   lazy val macros: Project = Project(
     "monocle-macro",
@@ -106,6 +122,7 @@ object MonocleBuild extends Build {
       unmanagedSourceDirectories in Compile += (sourceDirectory in Compile).value / s"scala-${scalaBinaryVersion.value}"
     )
   ) dependsOn(core)
+  .configure(scalajs)
 
   lazy val generic: Project = Project(
     "monocle-generic",
@@ -114,7 +131,8 @@ object MonocleBuild extends Build {
       libraryDependencies ++= Seq(scalaz, shapeless.value),
       previousVersion("generic")
     )
-  ) dependsOn(core)
+  ).dependsOn(core)
+  .configure(scalajs)
 
   lazy val test: Project = Project(
     "monocle-test",
@@ -123,7 +141,8 @@ object MonocleBuild extends Build {
       libraryDependencies ++= Seq(scalaz, scalazSpec2, shapeless.value),
       addCompilerPlugin(paradisePlugin)
     )
-  ) dependsOn(core, generic ,law, macros)
+  ).dependsOn(core, generic ,law, macros)
+  .configure(scalajs)
 
   lazy val example: Project = Project(
     "monocle-example",
@@ -132,7 +151,8 @@ object MonocleBuild extends Build {
       libraryDependencies ++= Seq(scalaz, shapeless.value),
       addCompilerPlugin(paradisePlugin) // see: http://stackoverflow.com/q/23485426/463761
     )
-  ) dependsOn(core, macros, generic, test % "test->test")
+  ).dependsOn(core, macros, generic, test % "test->test")
+  .configure(scalajs)
 
   lazy val bench: Project = Project(
     "monocle-bench",
@@ -146,6 +166,7 @@ object MonocleBuild extends Build {
       addCompilerPlugin(kindProjector)
     )
   )
+  .configure(scalajs)
 
   lazy val publishSettings: Seq[Setting[_]] = Seq(
     releaseProcess := Seq[ReleaseStep](
