@@ -1,3 +1,5 @@
+addSbtPlugin("org.scala-js" % "sbt-scalajs" % "0.6.2")
+
 resolvers += Resolver.sonatypeRepo("releases")
 
 addSbtPlugin("com.typesafe.sbt" % "sbt-pgp" % "0.8.3")
