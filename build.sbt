@@ -5,8 +5,11 @@ import sbt.Keys._
 import sbtrelease.ReleasePlugin.autoImport.ReleaseTransformations._
 import sbtunidoc.Plugin.UnidocKeys._
 
+import org.scalajs.sbtplugin.ScalaJSPlugin
+import org.scalajs.sbtplugin.ScalaJSPlugin.autoImport.toScalaJSGroupID
+
 lazy val buildSettings = Seq(
-  organization       := "com.github.julien-truffaut",
+  organization       := "com.github.japgolly.fork.monocle",
   scalaVersion       := "2.11.7",
   crossScalaVersions := Seq("2.10.6", "2.11.7"),
   scalacOptions     ++= Seq(
@@ -30,14 +33,14 @@ lazy val buildSettings = Seq(
   scmInfo := Some(ScmInfo(url("https://github.com/julien-truffaut/Monocle"), "scm:git:git@github.com:julien-truffaut/Monocle.git"))
 )
 
-lazy val scalaz     = "org.scalaz"      %% "scalaz-core" % "7.2.0"
-lazy val shapeless  = "com.chuusai"     %% "shapeless"   % "2.2.5"
+lazy val scalaz     = "com.github.japgolly.fork.scalaz"      %%%! "scalaz-core" % "7.2.0"
+lazy val shapeless  = "com.chuusai"     %%%! "shapeless"   % "2.2.5"
 lazy val refinedDep = "eu.timepit"      %% "refined"     % "0.3.2"
 
 lazy val discpline  = "org.typelevel"   %% "discipline"  % "0.4"
 lazy val scalatest  = "org.scalatest"   %% "scalatest"   % "3.0.0-M7"  % "test"
 
-lazy val macroCompat = "org.typelevel" %% "macro-compat" % "1.1.0"
+lazy val macroCompat = "org.typelevel" %%%! "macro-compat" % "1.1.0"
 
 lazy val macroVersion = "2.1.0"
 lazy val paradisePlugin = compilerPlugin("org.scalamacros" %  "paradise"       % macroVersion cross CrossVersion.full)
@@ -46,25 +49,39 @@ def mimaSettings(module: String): Seq[Setting[_]] = mimaDefaultSettings ++ Seq(
   previousArtifact := Some("com.github.julien-truffaut" %  (s"monocle-${module}_2.11") % "1.1.0")
 )
 
-lazy val monocleSettings = buildSettings ++ publishSettings
+def scalajs: Project => Project =
+	_.enablePlugins(org.scalajs.sbtplugin.ScalaJSPlugin)
+		.settings(ScalaJSPlugin.projectSettings: _*)
+		.settings(scalacOptions in Compile += sourceMapOpt)
+
+val sourceMapOpt = {
+	val a = new java.io.File("").toURI.toString.replaceFirst("/$", "")
+	val g = "https://raw.githubusercontent.com/japgolly/Monocle/v1.2.0-js"
+	s"-P:scalajs:mapSourceURI:$a->$g/"
+}
+
+lazy val monocleSettings = buildSettings ++ publishSettings // ++ ScalaJSPlugin.projectSettings
 
 lazy val monocle = project.in(file("."))
   .settings(moduleName := "monocle")
   .settings(monocleSettings)
   .aggregate(core, generic, law, macros, state, refined, test, example, docs, bench)
   .dependsOn(core, generic, law, macros, state, refined, test % "test-internal -> test", bench % "compile-internal;test-internal -> test")
+  .configure(scalajs)
 
 lazy val core = project
   .settings(moduleName := "monocle-core")
   .settings(monocleSettings)
   .settings(mimaSettings("core"))
   .settings(libraryDependencies := Seq(scalaz))
+  .configure(scalajs)
 
 lazy val generic = project.dependsOn(core)
   .settings(moduleName := "monocle-generic")
   .settings(monocleSettings)
   .settings(mimaSettings("generic"))
   .settings(libraryDependencies := Seq(scalaz, shapeless))
+  .configure(scalajs)
 
 lazy val refined = project.dependsOn(core)
   .settings(moduleName := "monocle-refined")
@@ -93,11 +110,13 @@ lazy val macros = project.dependsOn(core)
   } getOrElse Nil,
   unmanagedSourceDirectories in Compile += (sourceDirectory in Compile).value / s"scala-${scalaBinaryVersion.value}"
   ))
+  .configure(scalajs)
 
 lazy val state = project.dependsOn(core)
   .settings(moduleName := "monocle-state")
   .settings(monocleSettings)
   .settings(libraryDependencies := Seq(scalaz))
+  .configure(scalajs)
 
 lazy val test = project.dependsOn(core, generic, macros, law, state, refined)
   .settings(moduleName := "monocle-test")
